@@ -1,22 +1,24 @@
-# Use the correct Java version (21)
+# Use Java 21 (Same as your local build)
 FROM eclipse-temurin:21-jdk AS build
 
-# Set working directory
+# Set working directory inside the container
 WORKDIR /app
 
-# Copy project files
+# Copy all project files
 COPY . /app
 
 # Ensure Maven wrapper is executable
 RUN chmod +x mvnw
 
-# Use .m2 cache to speed up builds
-RUN --mount=type=cache,target=/root/.m2 ./mvnw clean install -DskipTests || (cat target/mvn-dependency-list.log && exit 1)
+# Build the project
+RUN ./mvnw clean install -DskipTests
 
-# Use runtime image for smaller final build
+# Use a minimal runtime image
 FROM eclipse-temurin:21-jre
 WORKDIR /app
+
+# Copy the built jar file from the build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Run the application
+# Set the command to run the application
 CMD ["java", "-jar", "app.jar"]

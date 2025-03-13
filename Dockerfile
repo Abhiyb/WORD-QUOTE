@@ -21,4 +21,5 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 # Set the command to run the application
-CMD ["java", "-jar", "app.jar"]
+CMD ["java", "-jar", "/app/target/Quote-Word-0.0.1-SNAPSHOT.jar"]
+

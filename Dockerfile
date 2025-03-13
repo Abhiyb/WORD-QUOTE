@@ -1,25 +1,20 @@
-# Use Java 21 (Same as your local build)
-FROM eclipse-temurin:21-jdk AS build
+# Use an official Java runtime as a parent image
+FROM openjdk:17-jdk-slim
 
-# Set working directory inside the container
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy all project files
-COPY . /app
+# Copy the entire project to the container
+COPY . /app/
 
-# Ensure Maven wrapper is executable
-RUN chmod +x mvnw
+# Build the project inside the container (if you haven't built it locally)
+RUN ./mvnw clean package -DskipTests
 
-# Build the project
-RUN ./mvnw clean install -DskipTests
+# Copy the JAR file to the final image
+COPY target/Quote-Word-0.0.1-SNAPSHOT.jar /app/Quote-Word.jar
 
-# Use a minimal runtime image
-FROM eclipse-temurin:21-jre
-WORKDIR /app
+# Expose the port your Spring Boot app runs on
+EXPOSE 8080
 
-# Copy the built jar file from the build stage
-COPY --from=build /app/target/*.jar app.jar
-
-# Set the command to run the application
-CMD ["java", "-jar", "/app/target/Quote-Word-0.0.1-SNAPSHOT.jar"]
-
+# Run the application
+CMD ["java", "-jar", "/app/Quote-Word.jar"]

@@ -1,19 +1,27 @@
-# Use an official Java runtime as a parent image
-FROM openjdk:17-jdk-slim
+# ---- Build Stage ----
+FROM maven:3.9.5-eclipse-temurin-17 AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the entire project to the container
-COPY . /app/
+# Copy only the necessary files first (for dependency caching)
+COPY pom.xml ./
+RUN mvn dependency:go-offline -B
 
-# Build the project inside the container (if you haven't built it locally)
-RUN ./mvnw clean package -DskipTests
+# Copy the actual source code
+COPY src ./src
 
-# Copy the JAR file to the final image
-COPY target/Quote-Word-0.0.1-SNAPSHOT.jar /app/Quote-Word.jar
+# Build the application
+RUN mvn clean package -DskipTests
 
-# Expose the port your Spring Boot app runs on
+# ---- Runtime Stage ----
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+# Copy only the built JAR file from the builder stage
+COPY --from=builder /app/target/Quote-Word-0.0.1-SNAPSHOT.jar /app/Quote-Word.jar
+
+# Expose the application port
 EXPOSE 8080
 
 # Run the application
